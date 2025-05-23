@@ -1,21 +1,18 @@
+// backend/app.js
 const express = require('express');
 const cors = require('cors');
-const dotenv = require('dotenv');
-const connectDB = require('./config/db');
-const itemRoutes = require('./routes/items');
-
-dotenv.config();
-connectDB();
+const bodyParser = require('body-parser');
+require('./config/db');             // DB
+const apiRoutes = require('./routes/api');  // Rutes
 
 const app = express();
-
 app.use(cors());
-app.use(express.json());
+app.use(bodyParser.json());
 
-// Rutes
-app.use('/api/items', itemRoutes);
+// Prefix per a totes les rutes d'API
+app.use('/api', apiRoutes);
 
-const PORT = process.env.PORT || 5000;
+const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
-  console.log(`Servidor arrencat al port ${PORT}`);
+  console.log(`Servidor escoltant al port ${PORT}`);
 });
