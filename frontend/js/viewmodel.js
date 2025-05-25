@@ -101,7 +101,7 @@ function handleBuy(id) {
   m.buyItem(id).then(loadAll).catch(error => {
     console.error('Error al comprar:', error);
     const errorMsg = document.getElementById('errorMsg');
-    if (errorMsg) errorMsg.textContent = `Error al comprar: ${error.message}`;
+    if (errorMsg) errorMsg.textContent = ` ${error.message}`;
   });
 }
 
