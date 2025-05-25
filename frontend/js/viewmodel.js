@@ -1,36 +1,74 @@
 import * as m from './model.js';
 import * as v from './view.js';
 
-let tasksCache = [], shopCache = [], dialogues = [], dlgIndex = 0;
+let tasksCache = [], shopCache = [], dialogues = [], userXp = 0, dlgIndex = 0;
 
 export function init() {
   loadAll();
-  // El evento para addBtn se maneja en view.js, así que no es necesario aquí
+  document.addEventListener('click', (e) => {
+    if (e.target.id === 'addBtn') {
+      const input = document.getElementById('taskInput');
+      const errorMsg = document.getElementById('errorMsg');
+      const title = input.value.trim();
+      if (!title) {
+        if (errorMsg) errorMsg.textContent = 'Introdueix un títol per a la missió';
+        return;
+      }
+      if (errorMsg) errorMsg.textContent = '';
+      m.addTask(title)
+        .then(() => {
+          input.value = '';
+          loadAll();
+        })
+        .catch(error => {
+          console.error('Error al afegir la tasca:', error);
+          if (errorMsg) errorMsg.textContent = `Error al afegir la missió: ${error.message}`;
+        });
+    }
+  });
 }
 
 async function loadAll() {
   try {
-    [ tasksCache, shopCache, dialogues ] = await Promise.all([
-      m.getTasks(), m.getShop(), m.getDialogues()
+    const [tasks, shop, dialogData, userData] = await Promise.all([
+      m.getTasks(),
+      m.getShop(),
+      m.getDialogues(),
+      m.getUserXp()
     ]);
+    tasksCache = tasks;
+    shopCache = shop;
+    dialogues = dialogData; // Usar la variable global
+    userXp = userData.totalXp || 0;
   } catch (error) {
     console.error('Error al cargar los datos:', error.message);
     tasksCache = [];
     shopCache = [];
     dialogues = [];
+    userXp = 0;
+    loadTasks();
+    setTimeout(() => {
+      const errorMsg = document.getElementById('errorMsg');
+      if (errorMsg) errorMsg.textContent = `Error al cargar los datos: ${error.message}`;
+    }, 0);
+    return;
   }
   loadTasks();
   loadInventory();
 }
 
 function loadTasks() {
-  const stats = calculateStats(tasksCache);
+  const stats = calculateStats();
   const invPromise = m.getInventory();
   invPromise.then(inv => {
     v.render(tasksCache, stats, inv, shopCache, dialogues[dlgIndex] || { text: 'Sin diálogos' }, handleDelete, handleToggle, handleBuy, nextDialogue);
   }).catch(error => {
     console.error('Error al cargar inventario:', error.message);
     v.render(tasksCache, stats, [], shopCache, dialogues[dlgIndex] || { text: 'Sin diálogos' }, handleDelete, handleToggle, handleBuy, nextDialogue);
+    setTimeout(() => {
+      const errorMsg = document.getElementById('errorMsg');
+      if (errorMsg) errorMsg.textContent = `Error al cargar inventario: ${error.message}`;
+    }, 0);
   });
 }
 
@@ -43,20 +81,37 @@ function loadInventory() {
   });
 }
 
-function handleDelete(id) { m.deleteTask(id).then(loadAll).catch(console.error); }
-function handleToggle(id) { m.toggleTask(id).then(loadAll).catch(console.error); }
-function handleBuy(id)    { m.buyItem(id).then(loadInventory).catch(console.error); }
-function nextDialogue()   {
+function handleDelete(id) {
+  m.deleteTask(id).then(loadAll).catch(error => {
+    console.error('Error al eliminar:', error);
+    const errorMsg = document.getElementById('errorMsg');
+    if (errorMsg) errorMsg.textContent = `Error al eliminar: ${error.message}`;
+  });
+}
+
+function handleToggle(id) {
+  m.toggleTask(id).then(loadAll).catch(error => {
+    console.error('Error al alternar:', error);
+    const errorMsg = document.getElementById('errorMsg');
+    if (errorMsg) errorMsg.textContent = `Error al alternar: ${error.message}`;
+  });
+}
+
+function handleBuy(id) {
+  m.buyItem(id).then(loadAll).catch(error => {
+    console.error('Error al comprar:', error);
+    const errorMsg = document.getElementById('errorMsg');
+    if (errorMsg) errorMsg.textContent = `Error al comprar: ${error.message}`;
+  });
+}
+
+function nextDialogue() {
   dlgIndex = (dlgIndex + 1) % (dialogues.length || 1);
   loadTasks();
 }
 
-function calculateStats(tasks) {
-  if (!Array.isArray(tasks)) {
-    console.error('tasks no es un array:', tasks);
-    return { totalXp: 0, level: 1, progress: 0 };
-  }
-  const totalXp = tasks.reduce((s, t) => s + (t.xp || 0), 0);
+function calculateStats() {
+  const totalXp = userXp;
   const level = Math.floor(totalXp / 100) + 1;
   const progress = totalXp % 100;
   return { totalXp, level, progress };

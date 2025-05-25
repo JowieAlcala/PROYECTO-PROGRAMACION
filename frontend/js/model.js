@@ -1,69 +1,55 @@
-const BASE_URL = 'http://localhost:3000';
+const BASE_URL = '/api';
+
+const fetchWithErrorLogging = async (url, options = {}) => {
+  try {
+    const response = await fetch(url, options);
+    if (!response.ok) {
+      const text = await response.text();
+      throw new Error(`Error en ${url}: ${response.status} - ${text}`);
+    }
+    return response.json();
+  } catch (error) {
+    console.error(`Error en ${url}:`, error.message);
+    throw error;
+  }
+};
 
 export const getTasks = async () => {
-  const response = await fetch(`${BASE_URL}/api/todos`);
-  if (!response.ok) {
-    throw new Error(`Error al obtener tareas: ${response.status}`);
-  }
-  return response.json();
+  return fetchWithErrorLogging(`${BASE_URL}/todos`);
 };
 
 export const addTask = async title => {
-  const response = await fetch(`${BASE_URL}/api/todos`, {
+  return fetchWithErrorLogging(`${BASE_URL}/todos`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ title })
   });
-  if (!response.ok) {
-    throw new Error(`Error al agregar tarea: ${response.status}`);
-  }
-  return response.json();
 };
 
 export const deleteTask = async id => {
-  const response = await fetch(`${BASE_URL}/api/todos/${id}`, { method: 'DELETE' });
-  if (!response.ok) {
-    throw new Error(`Error al eliminar tarea: ${response.status}`);
-  }
-  return response.json();
+  return fetchWithErrorLogging(`${BASE_URL}/todos/${id}`, { method: 'DELETE' });
 };
 
 export const toggleTask = async id => {
-  const response = await fetch(`${BASE_URL}/api/todos/${id}`, { method: 'PUT' });
-  if (!response.ok) {
-    throw new Error(`Error al alternar tarea: ${response.status}`);
-  }
-  return response.json();
+  return fetchWithErrorLogging(`${BASE_URL}/todos/${id}`, { method: 'PUT' });
 };
 
 export const getShop = async () => {
-  const response = await fetch(`${BASE_URL}/api/shop`);
-  if (!response.ok) {
-    throw new Error(`Error al obtener tienda: ${response.status}`);
-  }
-  return response.json();
+  return fetchWithErrorLogging(`${BASE_URL}/shop`);
 };
 
 export const buyItem = async id => {
-  const response = await fetch(`${BASE_URL}/api/shop/buy/${id}`, { method: 'POST' });
-  if (!response.ok) {
-    throw new Error(`Error al comprar item: ${response.status}`);
-  }
-  return response.json();
+  return fetchWithErrorLogging(`${BASE_URL}/shop/buy/${id}`, { method: 'POST' });
 };
 
 export const getInventory = async () => {
-  const response = await fetch(`${BASE_URL}/api/inventory`);
-  if (!response.ok) {
-    throw new Error(`Error al obtener inventario: ${response.status}`);
-  }
-  return response.json();
+  return fetchWithErrorLogging(`${BASE_URL}/inventory`);
 };
 
 export const getDialogues = async () => {
-  const response = await fetch(`${BASE_URL}/api/dialogues`);
-  if (!response.ok) {
-    throw new Error(`Error al obtener diálogos: ${response.status}`);
-  }
-  return response.json();
+  return fetchWithErrorLogging(`${BASE_URL}/dialogues`);
+};
+
+export const getUserXp = async () => {
+  return fetchWithErrorLogging(`${BASE_URL}/user/xp`);
 };

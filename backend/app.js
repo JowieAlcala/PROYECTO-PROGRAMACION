@@ -1,15 +1,15 @@
-// backend/app.js
 const express = require('express');
 const cors = require('cors');
-const bodyParser = require('body-parser');
-require('./config/db');             // DB
-const apiRoutes = require('./routes/api');  // Rutes
+const connectDB = require('./config/db');
+const apiRoutes = require('./routes/api');
+require('dotenv').config();
 
 const app = express();
-app.use(cors());
-app.use(bodyParser.json());
 
-// Prefix per a totes les rutes d'API
+connectDB();
+
+app.use(cors({ origin: 'http://localhost:5173' }));
+app.use(express.json());
 app.use('/api', apiRoutes);
 
 const PORT = process.env.PORT || 3000;
